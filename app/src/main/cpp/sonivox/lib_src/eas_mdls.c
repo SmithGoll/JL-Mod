@@ -126,6 +126,11 @@
 #include "eas_report.h"
 #include <string.h>
 
+// for a-law/u-law decoding
+#ifdef _16_BIT_SAMPLES
+    #include "pcm_aulaw.h"
+#endif
+
 //2 we should replace log10() function with fixed point routine in ConvertSampleRate()
 /* lint is choking on the ARM math.h file, so we declare the log10 function here */
 extern double log10(double x);
@@ -442,7 +447,7 @@ static EAS_I8 ConvertPan (EAS_I32 pan);
 static EAS_U8 ConvertQ (EAS_I32 q);
 
 #ifdef _DEBUG_DLS
-static void DumpDLS (S_EAS *pEAS);
+static void DumpDLS (S_DLS *pEAS);
 #endif
 
 
@@ -482,6 +487,8 @@ EAS_RESULT DLSParser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
     EAS_I32 linsSize;
     EAS_I32 ptblPos;
     EAS_I32 ptblSize;
+    EAS_I32 pgalPos;
+    EAS_I32 pgalSize;
     void *p;
 
     /* zero counts and pointers */
@@ -514,7 +521,7 @@ EAS_RESULT DLSParser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
     }
 
     /* no instrument or wavepool chunks */
-    linsSize = wvplSize = ptblSize = linsPos = wvplPos = ptblPos = 0;
+    linsSize = wvplSize = ptblSize = pgalSize = linsPos = wvplPos = ptblPos = pgalPos = 0;
 
     /* scan the chunks in the DLS list */
     endDLS = offset + size;
@@ -550,6 +557,11 @@ EAS_RESULT DLSParser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
             case CHUNK_PTBL:
                 ptblPos = chunkPos + 8;
                 ptblSize = size - 4;
+                break;
+
+            case CHUNK_PGAL:
+                pgalPos = chunkPos + 8;
+                pgalSize = size - 4;
                 break;
 
             default:
@@ -642,7 +654,7 @@ EAS_RESULT DLSParser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
         waveLenSize = (EAS_I32) (dls.waveCount * sizeof(EAS_U32));
 
         /* calculate final memory size */
-        size = (EAS_I32) sizeof(S_EAS) + instSize + rgnPoolSize + artPoolSize + (2 * waveLenSize) + (EAS_I32) dls.wavePoolSize;
+        size = (EAS_I32) sizeof(S_DLS) + instSize + rgnPoolSize + artPoolSize + (2 * waveLenSize) + (EAS_I32) dls.wavePoolSize;
         if (size <= 0) {
             EAS_HWFree(dls.hwInstData, dls.wsmpData);
             return EAS_ERROR_FILE_FORMAT;
@@ -657,8 +669,9 @@ EAS_RESULT DLSParser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
             return EAS_ERROR_MALLOC_FAILED;
         }
         EAS_HWMemSet(dls.pDLS, 0, size);
+        EAS_HWMemSet(dls.pDLS->programMap, 0xFF, 128);
         dls.pDLS->refCount = 1;
-        p = PtrOfs(dls.pDLS, sizeof(S_EAS));
+        p = PtrOfs(dls.pDLS, sizeof(S_DLS));
 
         /* setup pointer to programs */
         dls.pDLS->numDLSPrograms = (EAS_U16) dls.instCount;
@@ -704,6 +717,10 @@ EAS_RESULT DLSParser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
     dls.regionCount = dls.instCount = 0;
     if (result == EAS_SUCCESS)
         result = Parse_lins(&dls, linsPos, linsSize);
+
+    /* parse program alias list chunk */
+    if (result == EAS_SUCCESS && pgalSize)
+        result = Parse_pgal(&dls, pgalPos);
 
     /* clean up any temporary objects that were allocated */
     if (dls.wsmpData)
@@ -1211,11 +1228,27 @@ static EAS_RESULT Parse_fmt (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 pos, S_WSM
     /* get number of channels */
     if ((result = EAS_HWGetWord(pDLSData->hwInstData, pDLSData->fileHandle, &wtemp, EAS_FALSE)) != EAS_SUCCESS)
         return result;
+#if defined( _8_BIT_SAMPLES)
     if (wtemp != 1)
     {
         { /* dpp: EAS_ReportEx(_EAS_SEVERITY_ERROR, "No support for DLS multi-channel samples\n"); */ }
         return EAS_ERROR_UNRECOGNIZED_FORMAT;
     }
+#elif defined(_16_BIT_SAMPLES)
+    switch(wtemp)
+    {
+        case WAVE_FORMAT_PCM:
+        case WAVE_FORMAT_ALAW:
+        case WAVE_FORMAT_MULAW:
+            p->fmtTag = wtemp;
+            break;
+        default:
+            { /* dpp: EAS_Report(_EAS_SEVERITY_ERROR, "Unsupported DLS sample format %04x\n", wtemp); */ }
+            return EAS_ERROR_UNRECOGNIZED_FORMAT;
+    }
+#else
+#error "Must specifiy _8_BIT_SAMPLES or _16_BIT_SAMPLES"
+#endif
 
     /* get sample rate */
     if ((result = EAS_HWGetDWord(pDLSData->hwInstData, pDLSData->fileHandle, &p->sampleRate, EAS_FALSE)) != EAS_SUCCESS)
@@ -1341,31 +1374,48 @@ static EAS_RESULT Parse_data (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 pos, EAS_
     if ((result = EAS_HWFileSeek(pDLSData->hwInstData, pDLSData->fileHandle, pos)) != EAS_SUCCESS)
         return result;
 
-        p = pSample;
-
-        while (size)
+    p = pSample;
+    while (size)
+    {
+        /* read a small chunk of data and convert it */
+        count = (size < SAMPLE_CONVERT_CHUNK_SIZE ? size : SAMPLE_CONVERT_CHUNK_SIZE);
+        if ((result = EAS_HWReadFile(pDLSData->hwInstData, pDLSData->fileHandle, convBuf, count, &count)) != EAS_SUCCESS)
         {
-            /* read a small chunk of data and convert it */
-            count = (size < SAMPLE_CONVERT_CHUNK_SIZE ? size : SAMPLE_CONVERT_CHUNK_SIZE);
-            if ((result = EAS_HWReadFile(pDLSData->hwInstData, pDLSData->fileHandle, convBuf, count, &count)) != EAS_SUCCESS)
-            {
-                return result;
-            }
-            size -= count;
-            if (pWsmp->bitsPerSample == 16)
-            {
-                memcpy(p, convBuf, count);
-                p += count >> 1;
-            }
-            else
-            {
-                for(i=0; i<count; i++)
-                {
-                    *p++ = (short)((convBuf[i] ^ 0x80) << 8);
-                }
-            }
-
+            return result;
         }
+        size -= count;
+        if (pWsmp->bitsPerSample == 16)
+        {
+            memcpy(p, convBuf, count);
+            p += count >> 1;
+        }
+        else
+        {
+            switch(pWsmp->fmtTag)
+            {
+                case WAVE_FORMAT_ALAW:
+                    for(i=0; i<count; i++)
+                    {
+                        *p++ = alaw2linear(convBuf[i]);
+                    }
+                    break;
+                case WAVE_FORMAT_MULAW:
+                    for(i=0; i<count; i++)
+                    {
+                        *p++ = ulaw2linear(convBuf[i]);
+                    }
+                    break;
+                case WAVE_FORMAT_PCM:
+                    for(i=0; i<count; i++)
+                    {
+                        *p++ = (short)((convBuf[i] ^ 0x80) << 8);
+                    }
+                    break;
+            }
+        }
+
+    }
+
     /* for looped samples, copy the last sample to the end */
     if (pWsmp->loopLength)
     {
@@ -1619,6 +1669,11 @@ static EAS_RESULT Parse_insh (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 pos, EAS_
     {
         { /* dpp: EAS_ReportEx(_EAS_SEVERITY_WARNING, "DLS program number is out of range: %08lx\n", program); */ }
         program &= 0x7f;
+    }
+    if (bank & 0x80000000u || ((bank >> 8) & 0x7f) == DEFAULT_RHYTHM_BANK_MSB)
+    {
+        // drum instrument
+        bank |= 0x10000;
     }
 
     /* save the program number */
@@ -2426,6 +2481,73 @@ static EAS_RESULT Parse_cdl (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 size, EAS_
 }
 
 /*----------------------------------------------------------------------------
+ * Parse_pgal ()
+ *----------------------------------------------------------------------------
+ * Purpose:
+ *
+ *
+ * Inputs:
+ *
+ *
+ * Outputs:
+ *
+ *
+ *----------------------------------------------------------------------------
+*/
+static EAS_RESULT Parse_pgal (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 pos) {
+    EAS_RESULT result;
+    EAS_U32 temp;
+    EAS_I32 aliasCount;
+    EAS_I32 versionLen;
+
+    /* seek to start of chunk */
+    if ((result = EAS_HWFileSeek(pDLSData->hwInstData, pDLSData->fileHandle, pos)) != EAS_SUCCESS)
+        return result;
+
+    /* get pgal version */
+    if ((result = EAS_HWGetDWord(pDLSData->hwInstData, pDLSData->fileHandle, &temp, EAS_FALSE)) != EAS_SUCCESS)
+        return result;
+
+    /* pgal no version tag */
+    if (temp == 0x03020100) {
+        /* seek to start of chunk */
+        if ((result = EAS_HWFileSeek(pDLSData->hwInstData, pDLSData->fileHandle, pos)) != EAS_SUCCESS)
+            return result;
+        versionLen = 0;
+    } else
+        versionLen = 4;
+
+    /* skip the drum note map (stub) */
+    if ((result = EAS_HWFileSeek(pDLSData->hwInstData, pDLSData->fileHandle, pos + versionLen + 128)) != EAS_SUCCESS)
+        return result;
+
+    /* get the count of instrument alias */
+    if ((result = EAS_HWGetDWord(pDLSData->hwInstData, pDLSData->fileHandle, &temp, EAS_FALSE)) != EAS_SUCCESS)
+        return result;
+
+    if (!temp)
+        return EAS_ERROR_INVALID_PARAMETER;
+
+    EAS_I8 *progMap = pDLSData->pDLS->programMap;
+    for (EAS_I32 i = 0; i < aliasCount; i++) {
+        EAS_U16 t[4];
+
+        /* read alias src and dest */
+        for (EAS_I32 j = 0; j < 4; j++) {
+            if ((result = EAS_HWGetWord(pDLSData->hwInstData, pDLSData->fileHandle, &t[j], EAS_FALSE)) != EAS_SUCCESS)
+                return result;
+        }
+
+        if ((t[0] != DEFAULT_MELODY_BANK_MSB << 7 && t[0] != 0) ||
+            (t[2] != DEFAULT_MELODY_BANK_MSB << 7 && t[2] != 0))
+            return EAS_ERROR_INVALID_PARAMETER;
+
+        progMap[(t[1] & 0x7f)] = t[3] & 0x7f;
+    }
+    return EAS_SUCCESS;
+}
+
+/*----------------------------------------------------------------------------
  * Convert_rgn()
  *----------------------------------------------------------------------------
  * Purpose:
@@ -2732,10 +2854,10 @@ static EAS_U8 ConvertQ (EAS_I32 q)
  * DumpDLS()
  *----------------------------------------------------------------------------
 */
-static void DumpDLS (S_EAS *pEAS)
+static void DumpDLS (S_DLS *pEAS)
 {
     S_DLS_ARTICULATION *pArt;
-    S_DLS_REGION *pRegion;
+    S_WT_REGION *pRegion;
     EAS_INT i;
     EAS_INT j;
 
@@ -2755,7 +2877,7 @@ static void DumpDLS (S_EAS *pEAS)
         for (j = pEAS->pPrograms[i].regionIndex; ; j++)
         {
             EAS_ReportEx(_EAS_SEVERITY_NOFILTER, 0x19299ed4, 0x00000027 , j);
-            pRegion = &pEAS->pWTRegions[j];
+            pRegion = &(pEAS->pDLSRegions[j].wtRegion);
             EAS_ReportEx(_EAS_SEVERITY_NOFILTER, 0x19299ed4, 0x00000028 , pRegion->gain);
             EAS_ReportEx(_EAS_SEVERITY_NOFILTER, 0x19299ed4, 0x00000029 , pRegion->region.rangeLow, pRegion->region.rangeHigh);
             EAS_ReportEx(_EAS_SEVERITY_NOFILTER, 0x19299ed4, 0x0000002a , pRegion->region.keyGroupAndFlags);

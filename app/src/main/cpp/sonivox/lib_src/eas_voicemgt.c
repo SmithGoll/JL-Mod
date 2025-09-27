@@ -1817,7 +1817,8 @@ void VMStartNote (S_VOICE_MGR *pVoiceMgr, S_SYNTH *pSynth, EAS_U8 channel, EAS_U
             regionIndex++;
         }
     }
-    else
+    /* we do not want to use android soundbank when we have a dls soundbank */
+    else if (pSynth->pDLS == NULL)
 #endif
 
     /* braces here for #if clause */
@@ -2642,6 +2643,10 @@ static EAS_RESULT VMFindDLSProgram (const S_DLS *pDLS, EAS_U32 bank, EAS_U8 prog
     if (pDLS == NULL)
         return EAS_FAILURE;
 
+    /* check if it has an alias */
+    if ((bank & 0x10000) == 0 && pDLS->programMap[programNum & 0x7f] != -1)
+        programNum = pDLS->programMap[programNum & 0x7f];
+
     /* establish locale */
     locale = (bank << 8) | programNum;
 
@@ -2652,6 +2657,94 @@ static EAS_RESULT VMFindDLSProgram (const S_DLS *pDLS, EAS_U32 bank, EAS_U8 prog
         {
             *pRegionIndex = p->regionIndex;
             return EAS_SUCCESS;
+        }
+    }
+
+    /* also search bank 0 when default bank (MSB) is used */
+    if (((bank & 0xFF00) == DEFAULT_MELODY_BANK_NUMBER) || ((bank & 0xFF00) == DEFAULT_RHYTHM_BANK_NUMBER))
+    {
+        /* establish locale */
+        locale = ((bank & 0x100FF) << 8) | programNum;
+
+        /* search for program */
+        for (i = 0, p = pDLS->pDLSPrograms; i < pDLS->numDLSPrograms; i++, p++)
+        {
+            if (p->locale == locale)
+            {
+                *pRegionIndex = p->regionIndex;
+                return EAS_SUCCESS;
+            }
+        }
+    }
+
+    /* fall back to default bank */
+    if ((bank != DEFAULT_MELODY_BANK_NUMBER) && (bank != (0x10000 | DEFAULT_RHYTHM_BANK_NUMBER)))
+    {
+        /* establish locale */
+        if (bank & 0x10000)
+        {
+            locale = ((0x10000 | DEFAULT_RHYTHM_BANK_NUMBER) << 8) | programNum;
+        }
+        else
+        {
+            locale = (DEFAULT_MELODY_BANK_NUMBER << 8) | programNum;
+        }
+
+        /* search for program */
+        for (i = 0, p = pDLS->pDLSPrograms; i < pDLS->numDLSPrograms; i++, p++)
+        {
+            if (p->locale == locale)
+            {
+                *pRegionIndex = p->regionIndex;
+                return EAS_SUCCESS;
+            }
+        }
+
+        /* also search bank 0 */
+
+        /* establish locale */
+        locale = ((bank & 0x10000) << 8) | programNum;
+
+        /* search for program */
+        for (i = 0, p = pDLS->pDLSPrograms; i < pDLS->numDLSPrograms; i++, p++)
+        {
+            if (p->locale == locale)
+            {
+                *pRegionIndex = p->regionIndex;
+                return EAS_SUCCESS;
+            }
+        }
+    }
+
+    /* switch to program 0 in the default bank, when searching for drum instrument */
+    if ((bank & 0x10000) && programNum)
+    {
+        /* establish locale */
+        locale = ((0x10000 | DEFAULT_RHYTHM_BANK_NUMBER) << 8);
+
+        /* search for program */
+        for (i = 0, p = pDLS->pDLSPrograms; i < pDLS->numDLSPrograms; i++, p++)
+        {
+            if (p->locale == locale)
+            {
+                *pRegionIndex = p->regionIndex;
+                return EAS_SUCCESS;
+            }
+        }
+
+        /* also search bank 0 */
+
+        /* establish locale */
+        locale = (0x10000 << 8);
+
+        /* search for program */
+        for (i = 0, p = pDLS->pDLSPrograms; i < pDLS->numDLSPrograms; i++, p++)
+        {
+            if (p->locale == locale)
+            {
+                *pRegionIndex = p->regionIndex;
+                return EAS_SUCCESS;
+            }
         }
     }
 

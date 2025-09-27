@@ -355,6 +355,7 @@ typedef struct s_eas_dls_tag
     EAS_U16             numDLSRegions;
     EAS_U16             numDLSArticulations;
     EAS_U16             numDLSSamples;
+    EAS_I8              programMap[128];
     EAS_U8              refCount;
 } S_DLS;
 #endif
