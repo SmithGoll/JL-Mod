@@ -36,10 +36,10 @@ android {
 
     signingConfigs {
         create("emulator") {
-            keyAlias = 'alias'
-            keyPassword = 'xrj45yWGLbsO7W0v'
-            storeFile = rootProject.file('testkey_untrusted.jks')
-            storePassword = 'xrj45yWGLbsO7W0v'
+            keyAlias = "alias"
+            keyPassword = "xrj45yWGLbsO7W0v"
+            storeFile = rootProject.file("testkey_untrusted.jks")
+            storePassword = "xrj45yWGLbsO7W0v"
         }
     }
 
