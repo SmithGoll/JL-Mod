@@ -240,7 +240,7 @@ This is useful for determining the DLS chunk types
 #define CHUNK_FMT                   CHUNK_TYPE('f','m','t',' ')
 #define CHUNK_DATA                  CHUNK_TYPE('d','a','t','a')
 #define CHUNK_DMPR                  CHUNK_TYPE('d','m','p','r')
-
+#define CHUNK_PGAL                  CHUNK_TYPE('p','g','a','l')
 
 #define WAVE_FORMAT_PCM             0x0001 /* Microsoft PCM format, see DLS2.1 p60 */
 #define WAVE_FORMAT_ALAW            0x0006 /* Defined same as Microsoft's mmreg.h */

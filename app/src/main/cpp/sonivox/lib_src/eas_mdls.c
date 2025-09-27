@@ -240,6 +240,9 @@ typedef struct
     EAS_U16 bitsPerSample;
     EAS_I16 fineTune;
     EAS_U8  unityNote;
+#ifdef _16_BIT_SAMPLES
+    EAS_U16 fmtTag;
+#endif
 } S_WSMP_DATA;
 
 /* temporary data structure used while parsing a DLS file */
