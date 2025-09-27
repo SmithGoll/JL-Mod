@@ -36,14 +36,10 @@ android {
 
     signingConfigs {
         create("emulator") {
-            rootProject.file("keystore.properties").takeIf(File::isFile)?.inputStream().use {
-                val keystoreProperties = Properties()
-                keystoreProperties.load(it)
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
-                storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
-            }
+            keyAlias = 'alias'
+            keyPassword = 'xrj45yWGLbsO7W0v'
+            storeFile = rootProject.file('testkey_untrusted.jks')
+            storePassword = 'xrj45yWGLbsO7W0v'
         }
     }
 
