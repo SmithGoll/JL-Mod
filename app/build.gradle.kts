@@ -33,7 +33,7 @@ android {
         prefab = true
         buildConfig = true
     }
-/*
+
     signingConfigs {
         create("emulator") {
             rootProject.file("keystore.properties").takeIf(File::isFile)?.inputStream().use {
@@ -46,7 +46,7 @@ android {
             }
         }
     }
-*/
+
     buildTypes {
         release {
             isMinifyEnabled = true
