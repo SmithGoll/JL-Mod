@@ -438,6 +438,7 @@ static EAS_RESULT Parse_lart (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 pos, EAS_
 static EAS_RESULT Parse_art (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 pos, S_DLS_ART_VALUES *pArt);
 static EAS_RESULT Parse_wlnk (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 pos, EAS_U32 *pWaveIndex);
 static EAS_RESULT Parse_cdl (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 size, EAS_U32 *pValue);
+static EAS_RESULT Parse_pgal (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 pos);
 static void Convert_rgn (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_U16 regionIndex, EAS_U16 artIndex, EAS_U16 waveIndex, S_WSMP_DATA *pWsmp);
 static void Convert_art (SDLS_SYNTHESIZER_DATA *pDLSData, const S_DLS_ART_VALUES *pDLSArt,  EAS_U16 artIndex);
 static EAS_I16 ConvertSampleRate (EAS_U32 sampleRate);
