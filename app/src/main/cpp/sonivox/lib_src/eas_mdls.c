@@ -1223,19 +1223,10 @@ static EAS_RESULT Parse_fmt (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 pos, S_WSM
     /* get format tag */
     if ((result = EAS_HWGetWord(pDLSData->hwInstData, pDLSData->fileHandle, &wtemp, EAS_FALSE)) != EAS_SUCCESS)
         return result;
+#if defined( _8_BIT_SAMPLES)
     if (wtemp != WAVE_FORMAT_PCM)
     {
         { /* dpp: EAS_ReportEx(_EAS_SEVERITY_ERROR, "Unsupported DLS sample format %04x\n", wtemp); */ }
-        return EAS_ERROR_UNRECOGNIZED_FORMAT;
-    }
-
-    /* get number of channels */
-    if ((result = EAS_HWGetWord(pDLSData->hwInstData, pDLSData->fileHandle, &wtemp, EAS_FALSE)) != EAS_SUCCESS)
-        return result;
-#if defined( _8_BIT_SAMPLES)
-    if (wtemp != 1)
-    {
-        { /* dpp: EAS_ReportEx(_EAS_SEVERITY_ERROR, "No support for DLS multi-channel samples\n"); */ }
         return EAS_ERROR_UNRECOGNIZED_FORMAT;
     }
 #elif defined(_16_BIT_SAMPLES)
@@ -1253,6 +1244,16 @@ static EAS_RESULT Parse_fmt (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 pos, S_WSM
 #else
 #error "Must specifiy _8_BIT_SAMPLES or _16_BIT_SAMPLES"
 #endif
+
+    /* get number of channels */
+    if ((result = EAS_HWGetWord(pDLSData->hwInstData, pDLSData->fileHandle, &wtemp, EAS_FALSE)) != EAS_SUCCESS)
+        return result;
+    if (wtemp != 1)
+    {
+        { /* dpp: EAS_ReportEx(_EAS_SEVERITY_ERROR, "No support for DLS multi-channel samples\n"); */ }
+        return EAS_ERROR_UNRECOGNIZED_FORMAT;
+    }
+
 
     /* get sample rate */
     if ((result = EAS_HWGetDWord(pDLSData->hwInstData, pDLSData->fileHandle, &p->sampleRate, EAS_FALSE)) != EAS_SUCCESS)
