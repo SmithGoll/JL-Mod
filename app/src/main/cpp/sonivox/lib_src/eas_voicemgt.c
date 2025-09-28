@@ -2827,7 +2827,7 @@ void VMProgramChange (S_VOICE_MGR *pVoiceMgr, S_SYNTH *pSynth, EAS_U8 channel, E
 
 #ifdef DLS_SYNTHESIZER
     /* first check for DLS program that may overlay the internal instrument */
-    if (VMFindDLSProgram(pSynth->pDLS, bank, program, &regionIndex) != EAS_SUCCESS)
+    if (VMFindDLSProgram(pSynth->pDLS, bank | ((pChannel->channelFlags & CHANNEL_FLAG_RHYTHM_CHANNEL) ? 0x10000 : 0), program, &regionIndex) != EAS_SUCCESS)
 #endif
 
     /* braces to support 'if' clause above */
