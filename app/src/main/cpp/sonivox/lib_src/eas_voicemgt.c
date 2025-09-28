@@ -51,7 +51,7 @@
 #define WORKLOAD_AMOUNT_POLY_LIMIT          10
 
 /* pointer to base sound library */
-extern S_EAS easSoundLib;
+// extern S_EAS easSoundLib;
 
 #ifdef TEST_HARNESS
 extern S_EAS easTestLib;
@@ -282,7 +282,11 @@ EAS_RESULT VMInitialize (S_EAS_DATA *pEASData)
     EAS_HWMemSet(pVoiceMgr, 0, sizeof(S_VOICE_MGR));
 
     /* initialize non-zero variables */
+#if 0
     pVoiceMgr->pGlobalEAS = (S_EAS*) &easSoundLib;
+#else
+    pVoiceMgr->pGlobalEAS = (S_EAS*) 0;
+#endif
     pVoiceMgr->maxPolyphony = (EAS_U16) MAX_SYNTH_VOICES;
 
 #if defined(_SECONDARY_SYNTH) || defined(EAS_SPLIT_WT_SYNTH)

@@ -57,7 +57,7 @@ LOCAL_SRC_FILES = \
 	lib_src/eas_xmf.c \
 	lib_src/eas_xmfdata.c \
 	lib_src/jet.c \
-	lib_src/wt_22khz.c \
+#	lib_src/wt_22khz.c \
 	host_src/eas_config.c \
 	host_src/eas_report.c \
 	host_src/eas_wave.c \
