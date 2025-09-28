@@ -1821,8 +1821,9 @@ void VMStartNote (S_VOICE_MGR *pVoiceMgr, S_SYNTH *pSynth, EAS_U8 channel, EAS_U
             regionIndex++;
         }
     }
-    /* we do not want to use android soundbank when we have a dls soundbank */
-    else if (pSynth->pDLS == NULL)
+    /* we do not want to use eas internal soundbank */
+    // else
+    return;
 #endif
 
     /* braces here for #if clause */
