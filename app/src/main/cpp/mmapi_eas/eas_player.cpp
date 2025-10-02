@@ -15,15 +15,7 @@ namespace mmapi {
         EAS_DLSLIB_HANDLE Player::soundBank{nullptr};
 
         Player::Player(EAS_DATA_HANDLE easHandle, BaseFile *file, EAS_HANDLE stream, const int64_t duration)
-                : BasePlayer(duration), easHandle(easHandle), file(file), media(stream) {
-            EAS_DLSLIB_HANDLE dls = Player::soundBank;
-            if (dls == nullptr) {
-                EAS_SetParameter(easHandle, EAS_MODULE_REVERB, EAS_PARAM_REVERB_PRESET, EAS_PARAM_REVERB_CHAMBER);
-                EAS_SetParameter(easHandle, EAS_MODULE_REVERB, EAS_PARAM_REVERB_BYPASS, EAS_FALSE);
-            } else {
-                EAS_SetGlobalDLSLib(easHandle, dls);
-            }
-        }
+                : BasePlayer(duration), easHandle(easHandle), file(file), media(stream) {}
 
         Player::Player(EAS_DATA_HANDLE easHandle, EAS_HANDLE stream)
                 : Player(easHandle, nullptr, stream, -1) {}
@@ -41,6 +33,15 @@ namespace mmapi {
             if (result != EAS_SUCCESS) {
                 return result;
             }
+
+            EAS_DLSLIB_HANDLE dls = Player::soundBank;
+            if (dls == nullptr) {
+                EAS_SetParameter(easHandle, EAS_MODULE_REVERB, EAS_PARAM_REVERB_PRESET, EAS_PARAM_REVERB_CHAMBER);
+                EAS_SetParameter(easHandle, EAS_MODULE_REVERB, EAS_PARAM_REVERB_BYPASS, EAS_FALSE);
+            } else {
+                EAS_SetGlobalDLSLib(easHandle, dls);
+            }
+
             EAS_SetHeaderSearchFlag(easHandle, false);
             if (strcmp(locator, "device://tone") == 0) {
                 *pPlayer = new Player(easHandle, nullptr, nullptr, -1);
