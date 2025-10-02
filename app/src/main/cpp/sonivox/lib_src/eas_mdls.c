@@ -2510,6 +2510,7 @@ static EAS_RESULT Parse_pgal (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 pos) {
     EAS_U32 temp;
     EAS_I32 aliasCount;
     EAS_I32 versionLen;
+    EAS_I8 *progMap;
 
     /* seek to start of chunk */
     if ((result = EAS_HWFileSeek(pDLSData->hwInstData, pDLSData->fileHandle, pos)) != EAS_SUCCESS)
@@ -2539,7 +2540,8 @@ static EAS_RESULT Parse_pgal (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 pos) {
     if (!temp)
         return EAS_ERROR_INVALID_PARAMETER;
 
-    EAS_I8 *progMap = pDLSData->pDLS->programMap;
+    aliasCount = temp;
+    progMap = pDLSData->pDLS->programMap;
     for (EAS_I32 i = 0; i < aliasCount; i++) {
         EAS_U16 t[4];
 
