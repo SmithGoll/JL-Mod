@@ -2517,12 +2517,9 @@ static EAS_RESULT Parse_pgal (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 pos) {
         return result;
 
     /* pgal no version tag */
-    if (temp == 0x03020100) {
-        /* seek to start of chunk */
-        if ((result = EAS_HWFileSeek(pDLSData->hwInstData, pDLSData->fileHandle, pos)) != EAS_SUCCESS)
-            return result;
+    if (temp == 0x03020100)
         versionLen = 0;
-    } else
+    else
         versionLen = 4;
 
     /* skip the drum note map (stub) */
