@@ -1430,16 +1430,12 @@ static EAS_RESULT Parse_data (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 pos, EAS_
     /* for looped samples, copy the last sample to the end */
     if (pWsmp->loopLength)
     {
-        if( (pDLSData->wavePoolOffset + pWsmp->loopLength) >= pDLSData->wavePoolSize )
-        {
-            return EAS_SUCCESS;
-        }
         if (sampleLen < sizeof(EAS_SAMPLE)
             || (pWsmp->loopStart + pWsmp->loopLength) * sizeof(EAS_SAMPLE) > sampleLen - sizeof(EAS_SAMPLE)) {
             return EAS_FAILURE;
         }
 
-        pSample[(pWsmp->loopStart + pWsmp->loopLength)>>1] = pSample[(pWsmp->loopStart)>>1];
+        pSample[pWsmp->loopStart + pWsmp->loopLength] = pSample[pWsmp->loopStart];
     }
 
     return EAS_SUCCESS;
