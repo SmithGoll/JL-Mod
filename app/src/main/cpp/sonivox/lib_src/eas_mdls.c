@@ -1670,15 +1670,16 @@ static EAS_RESULT Parse_insh (SDLS_SYNTHESIZER_DATA *pDLSData, EAS_I32 pos, EAS_
     if (bank & 0x7fff8080)
     {
         { /* dpp: EAS_ReportEx(_EAS_SEVERITY_WARNING, "DLS bank number is out of range: %08lx\n", bank); */ }
-        bank &= 0x80007f7fu;
     }
 
-    if (bank & 0x80000000u || ((bank >> 8) & 0x7f) == DEFAULT_RHYTHM_BANK_MSB)
+    if (bank & 0x80000000u || (bank & 0x7f00) == DEFAULT_RHYTHM_BANK_NUMBER)
     {
         // drum instrument
+        bank &= 0x7f7f;
         bank |= 0x10000;
     }
-    bank &= 0x17f7f;
+    else
+        bank &= 0x7f7f;
 
     if (program > 127)
     {
