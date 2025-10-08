@@ -1763,6 +1763,10 @@ void VMStartNote (S_VOICE_MGR *pVoiceMgr, S_SYNTH *pSynth, EAS_U8 channel, EAS_U
     if (pChannel->channelFlags & CHANNEL_FLAG_MUTE)
         return;
 
+    /* check vibration program */
+    if (pChannel->programNum == 124)
+        return;
+
 #ifdef EXTERNAL_AUDIO
     /* pass event to external audio when requested */
     if ((pChannel->channelFlags & CHANNEL_FLAG_EXTERNAL_AUDIO) && (pSynth->cbEventFunc != NULL))
