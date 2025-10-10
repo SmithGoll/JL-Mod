@@ -714,8 +714,16 @@ static void WT_UpdateChannel (S_VOICE_MGR *pVoiceMgr, S_SYNTH *pSynth, EAS_U8 ch
     nChannelGain = (CC7 * CC11)^2  * master volume
     where CC7 == 100 by default, CC11 == 127, master volume == 32767
     */
+#if 0
     staticGain = MULT_EG1_EG1((pChannel->volume) << (NUM_EG1_FRAC_BITS - 7),
         (pChannel->expression) << (NUM_EG1_FRAC_BITS - 7));
+#else
+    /* down volume scale to 0-100, improve audio quality */
+    EAS_I32 volumeScale = MULT_EG1_EG1((pChannel->volume) << (NUM_EG1_FRAC_BITS - 7),
+        (100 << NUM_EG1_FRAC_BITS) / 127);
+    staticGain = MULT_EG1_EG1(volumeScale,
+        (pChannel->expression) << (NUM_EG1_FRAC_BITS - 7));
+#endif
 
     /* staticGain has to be squared */
     staticGain = MULT_EG1_EG1(staticGain, staticGain);
