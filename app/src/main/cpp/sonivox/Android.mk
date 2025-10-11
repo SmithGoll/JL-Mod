@@ -56,7 +56,6 @@ LOCAL_SRC_FILES = \
 	lib_src/eas_wtsynth.c \
 	lib_src/eas_xmf.c \
 	lib_src/eas_xmfdata.c \
-	lib_src/jet.c \
 	host_src/eas_config.c \
 	host_src/eas_report.c \
 	host_src/eas_wave.c \
@@ -77,17 +76,13 @@ LOCAL_CFLAGS += \
 	-D_FILTER_ENABLED \
 	-DDLS_SYNTHESIZER \
 	-D_REVERB_ENABLED \
-	-DFILE_HEADER_SEARCH \
 	-D_CRT_SECURE_NO_DEPRECATE \
 	-D_CRT_NONSTDC_NO_DEPRECATE \
 	-DMMAPI_SUPPORT \
-	-DJET_INTERFACE \
 	-Dfalse=0 \
 	-Wno-unused-parameter \
 	-Werror \
-	-D_CHORUS_ENABLED \
-#	-D_WAVE_PARSER \
-	-D_IMA_DECODER # (needed for IMA-ADPCM wave files)
+	-D_CHORUS_ENABLED
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/host_src \
