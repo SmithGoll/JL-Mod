@@ -363,7 +363,8 @@ EAS_RESULT EAS_HWGetWord (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE file, v
 EAS_RESULT EAS_HWGetDWord (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE file, void *p, EAS_BOOL msbFirst)
 {
     EAS_RESULT result;
-    EAS_U8 c1, c2,c3,c4;
+    EAS_U8 c1,c2,c3,c4;
+    EAS_INT val;
 
     /* read 4 bytes from the file */
     if ((result = EAS_HWGetByte(hwInstData, file, &c1)) != EAS_SUCCESS)
@@ -377,10 +378,11 @@ EAS_RESULT EAS_HWGetDWord (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE file, 
 
     /* order them as requested */
     if (msbFirst)
-        *((EAS_U32*) p) = ((EAS_U32) c1 << 24) | ((EAS_U32) c2 << 16) | ((EAS_U32) c3 << 8) | c4;
+        val = ((EAS_U32) c1 << 24) | ((EAS_U32) c2 << 16) | ((EAS_U32) c3 << 8) | c4;
     else
-        *((EAS_U32*) p)= ((EAS_U32) c4 << 24) | ((EAS_U32) c3 << 16) | ((EAS_U32) c2 << 8) | c1;
+        val = ((EAS_U32) c4 << 24) | ((EAS_U32) c3 << 16) | ((EAS_U32) c2 << 8) | c1;
 
+    *((EAS_I32*) p) = val;
     return EAS_SUCCESS;
 }
 
