@@ -2410,7 +2410,9 @@ EAS_PUBLIC EAS_RESULT EAS_SetSoundLibrary (EAS_DATA_HANDLE pEASData, EAS_HANDLE 
 */
 EAS_PUBLIC EAS_RESULT EAS_SetHeaderSearchFlag (EAS_DATA_HANDLE pEASData, EAS_BOOL searchFlag)
 {
+#ifdef FILE_HEADER_SEARCH
     pEASData->searchHeaderFlag = (EAS_BOOL8) searchFlag;
+#endif
     return EAS_SUCCESS;
 }
 

@@ -42,7 +42,6 @@ namespace mmapi {
                 EAS_SetGlobalDLSLib(easHandle, dls);
             }
 
-            EAS_SetHeaderSearchFlag(easHandle, false);
             if (strcmp(locator, "device://tone") == 0) {
                 *pPlayer = new Player(easHandle, nullptr, nullptr, -1);
                 return EAS_SUCCESS;
