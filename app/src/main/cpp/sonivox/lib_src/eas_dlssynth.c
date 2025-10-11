@@ -199,8 +199,10 @@ static EAS_I32 DLS_UpdateGain (S_WT_VOICE *pWTVoice, const S_DLS_ARTICULATION *p
 
     /* add total mod LFO effect */
     gain += FMUL_15x15(temp, pWTVoice->modLFO.lfoValue);
+#if 0
     if (gain > 0)
         gain = 0;
+#endif
 
     /* convert to linear gain including EG1 */
     if (pWTVoice->eg1State != eEnvelopeStateAttack)
