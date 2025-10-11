@@ -6,6 +6,8 @@
 #define MMAPI_EAS_FILE_H
 
 #include <stdio.h>
+#include <string.h>
+#include <vector>
 #include <jni.h>
 #include "libsonivox/eas_types.h"
 
@@ -28,6 +30,7 @@ namespace mmapi {
 
         class IOFile : public BaseFile {
             FILE *file;
+            std::vector<char> buffer;
 
         public:
             IOFile(const char *path, const char *const mode);

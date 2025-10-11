@@ -23,17 +23,29 @@ namespace mmapi {
             fseek(file, 0, SEEK_END);
             length = ftell(file);
             fseek(file, 0, SEEK_SET);
+
+            if (length < 1024 * 1024 * 5) {
+                buffer.resize(static_cast<size_t>(length));
+                /*size_t bytesRead = */fread(buffer.data(), 1, buffer.size(), file);
+                fclose(file);
+                file = nullptr;
+            }
         }
 
         IOFile::~IOFile() {
-            fclose(file);
+            if (file) fclose(file);
         }
 
         int IOFile::readAt(void *buf, int offset, int size) {
-            if (fseek(file, offset, SEEK_SET) != 0) {
-                return -1;
+            if (file) {
+                if (fseek(file, offset, SEEK_SET) != 0) {
+                    return -1;
+                }
+                return fread(buf, 1, size, file);
             }
-            return fread(buf, 1, size, file);
+
+            memcpy(buf, buffer.data() + offset, size);
+            return size;
         }
 
         MemFile::MemFile(JNIEnv *env, jbyteArray array) {
