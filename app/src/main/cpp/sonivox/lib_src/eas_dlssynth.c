@@ -367,7 +367,7 @@ static EAS_I32 DLS_UpdateGain (S_WT_VOICE *pWTVoice, const S_DLS_ARTICULATION *p
         temp = velocity << 8;
         temp = FMUL_15x15(temp, temp);
 #else
-        temp = velToGainScale[velocity] << 8;
+        temp = velToGainScale[velocity] << 7;
 #endif
         gain = FMUL_15x15(gain, temp);
     }
