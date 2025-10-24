@@ -20,7 +20,6 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := sonivox
 
 LOCAL_SRC_FILES = \
-	lib_src/eas_chorus.c \
 	lib_src/eas_dlssynth.c \
 	lib_src/eas_flog.c \
 	lib_src/eas_ima_tables.c \
@@ -29,13 +28,11 @@ LOCAL_SRC_FILES = \
 	lib_src/eas_math.c \
 	lib_src/eas_mdls.c \
 	lib_src/eas_midi.c \
-	lib_src/eas_mixbuf.c \
 	lib_src/eas_mixer.c \
 	lib_src/eas_ota.c \
 	lib_src/eas_pan.c \
 	lib_src/eas_pcm.c \
 	lib_src/eas_public.c \
-	lib_src/eas_reverb.c \
 	lib_src/eas_rtttl.c \
 	lib_src/eas_smf.c \
 	lib_src/eas_tonecontrol.c \
@@ -63,15 +60,12 @@ LOCAL_CFLAGS += \
 	-D_16_BIT_SAMPLES \
 	-D_FILTER_ENABLED \
 	-DDLS_SYNTHESIZER \
-	-D_REVERB_ENABLED \
 	-D_CRT_SECURE_NO_DEPRECATE \
 	-D_CRT_NONSTDC_NO_DEPRECATE \
 	-DMMAPI_SUPPORT \
 	-Dfalse=0 \
 	-Wno-unused-parameter \
-	-Werror \
-	-D_CHORUS_ENABLED \
-	-DUNIFIED_MIXER
+	-Werror
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/host_src \

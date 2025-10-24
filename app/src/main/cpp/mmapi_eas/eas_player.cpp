@@ -35,10 +35,7 @@ namespace mmapi {
             }
 
             EAS_DLSLIB_HANDLE dls = Player::soundBank;
-            if (dls == nullptr) {
-                EAS_SetParameter(easHandle, EAS_MODULE_REVERB, EAS_PARAM_REVERB_PRESET, EAS_PARAM_REVERB_CHAMBER);
-                EAS_SetParameter(easHandle, EAS_MODULE_REVERB, EAS_PARAM_REVERB_BYPASS, EAS_FALSE);
-            } else {
+            if (dls != nullptr) {
                 EAS_SetGlobalDLSLib(easHandle, dls);
             }
 
